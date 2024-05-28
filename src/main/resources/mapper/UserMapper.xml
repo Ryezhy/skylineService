@@ -1,0 +1,118 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hezae.skylineservice.mapper.UserMapper">
+
+<!-- 添加用户 -->
+    <insert id="addUser">
+        insert into users (username, password, email, phone, role, capacity) values (#{username}, #{password}, #{email}, #{phone}, #{role}, #{capacity})
+    </insert>
+
+    <!--根据用户手机号判断是否存在-->
+    <select id="selectUserByPhone" resultType="com.hezae.skylineservice.model.User">
+        SELECT * FROM users WHERE phone = #{phone}
+    </select>
+
+    <!--根据用户名判断是否存在-->
+    <select id="selectUserByUsername" resultType="com.hezae.skylineservice.model.User">
+        SELECT * FROM users WHERE username = #{username}
+    </select>
+    <!-- 根据用户id判断是否存在 -->
+    <select id="selectUserById" resultType="com.hezae.skylineservice.model.User">
+        SELECT * FROM users WHERE id = #{id}
+    </select>
+    <!-- 根据邮箱查询用户 -->
+    <select id="selectUserByEmail" resultType="com.hezae.skylineservice.model.User">
+        SELECT * FROM users WHERE email = #{email}
+    </select>
+    <!-- 匹配用户的账户密码 -->
+    <select id="selectUserByUsernameAndPassword" resultType="com.hezae.skylineservice.model.User">
+        SELECT * FROM users WHERE username = #{username} AND password = #{password}
+    </select>
+<!--根据用户id修改用户信息-->
+    <!-- 修改用户名 -->
+    <update id="updateUsernameById">
+        UPDATE users SET username = #{username} WHERE id = #{id};
+    </update>
+    <!-- 修改密码 -->
+    <update id="updatePasswordById">
+        UPDATE users SET password = #{password} WHERE id = #{id};
+    </update>
+    <!-- 修改昵称 -->
+    <update id="updateNicknameById">
+        UPDATE users SET nickname = #{nickname} WHERE id = #{id};
+    </update>
+    <!-- 修改手机号 -->
+    <update id="updatePhoneById">
+        UPDATE users SET phone = #{phone} WHERE id = #{id};
+    </update>
+    <!-- 修改邮箱 -->
+    <update id="updateEmailById">
+        UPDATE users SET email = #{email} WHERE id = #{id};
+    </update>
+    <!-- 修改角色 -->
+    <update id="updateRoleById">
+        UPDATE users SET role = #{role} WHERE id = #{id};
+    </update>
+    <!-- 修改容量 -->
+    <update id="updateCapacityById">
+        UPDATE users SET capacity = #{capacity} WHERE id = #{id};
+    </update>
+    <!-- 修改状态 -->
+    <update id="updateStatusById">
+        UPDATE users SET status = #{status} WHERE id = #{id};
+    </update>
+    <!--修改签名-->
+    <update id="updateSignatureById">
+        UPDATE users SET signature = #{signature} WHERE id = #{id};
+    </update>
+
+<!--根据用户名修改用户信息-->
+    <!-- 修改用户名 -->
+    <update id="updateUsernameByUsername">
+        UPDATE users SET username = #{newUsername} WHERE username = #{username};
+    </update>
+    <!-- 修改密码 -->
+    <update id="updatePasswordByUsername">
+        UPDATE users SET password = #{password} WHERE username = #{username};
+    </update>
+    <!-- 修改昵称 -->
+    <update id="updateNicknameByUsername">
+        UPDATE users SET nickname = #{nickname} WHERE username = #{username};
+    </update>
+    <!-- 修改手机号 -->
+    <update id="updatePhoneByUsername">
+        UPDATE users SET phone = #{phone} WHERE username = #{username};
+    </update>
+    <!-- 修改邮箱 -->
+    <update id="updateEmailByUsername">
+        UPDATE users SET email = #{email} WHERE username = #{username};
+    </update>
+    <!-- 修改角色 -->
+    <update id="updateRoleByUsername">
+        UPDATE users SET role = #{role} WHERE username = #{username};
+    </update>
+    <!-- 修改容量 -->
+    <update id="updateCapacityByUsername">
+        UPDATE users SET capacity = #{capacity} WHERE username = #{username};
+    </update>
+    <!--修改状态-->
+    <update id="updateStatusByUsername">
+        UPDATE users SET status = #{status} WHERE id = #{id};
+    </update>
+    <!--修改签名-->
+    <update id="updateSignatureByUsername">
+        UPDATE users SET signature = #{signature} WHERE username = #{username};
+    </update>
+
+<!--删除-->
+    <!-- 根据用户id删除用户 -->
+    <delete id="deleteUserById">
+        DELETE FROM users WHERE id = #{id};
+    </delete>
+    <!-- 根据用户名删除用户 -->
+    <delete id="deleteUserByUsername" >
+        DELETE FROM users WHERE username = #{username};
+    </delete>
+
+
+</mapper>
