@@ -7,4 +7,6 @@ public interface LoginService {
     public boolean verifyUser(String username, String password);
     //获取用户信息
     public User getUserInfo(String username, String password);
+
+    public User getUserInfo(int userId);
 }

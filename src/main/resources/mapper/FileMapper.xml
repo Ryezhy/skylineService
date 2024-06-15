@@ -3,35 +3,37 @@
 <mapper namespace="com.hezae.skylineservice.mapper.FileMapper">
 
 
-    <!-- 根据文件路径、文件名、文件类型和用户UserId查询文件 -->
-    <select id="selectFileByPathAndFileNameAndTypeAndUserId" resultType="com.hezae.skylineservice.model.File">
-        SELECT * FROM files
-        WHERE file_path = #{filePath}
-          AND file_name = #{name}
-          AND file_type = #{type}
-          AND owner_id = #{userId}
-    </select>
-
     <!-- //根据用户的id查询根目录所有文件-->
     <select id="selectRootDirByUser" resultType="com.hezae.skylineservice.model.File">
         SELECT * FROM files
         WHERE owner_id = #{userId}
-          AND file_path =#{username}
+          AND parent_folder_id = 0
     </select>
     <!-- //根据用户的id查询目录所有文件-->
     <select id="selectFileDirByUser" resultType="com.hezae.skylineservice.model.File">
         SELECT * FROM files
         WHERE owner_id = #{userId}
-          AND file_path= #{filePath}
+          AND parent_folder_id= #{parentId}
     </select>
      <!-- //根据用户的id查询目录所有文件夹，用于网盘上传文件地址选择-->
       <select id="selectFileFolderByUser" resultType="com.hezae.skylineservice.model.File">
         SELECT * FROM files
         WHERE owner_id = #{userId}
-          AND file_path= #{filePath}
+          AND parent_folder_id= #{parentId}
           AND file_type = concat('Folder')
 
       </select>
+    <!--//查询是否有文件-->
+    <select id="selectFileById" resultType="com.hezae.skylineservice.model.File">
+        SELECT * FROM files
+        WHERE file_id = #{fileId}
+    </select>
+    <select id="selectFileByUserAndFileNameAndParentFolderId" resultType="com.hezae.skylineservice.model.File">
+        SELECT * FROM files
+        WHERE owner_id = #{userId}
+          AND file_name = concat(#{fileName})
+          AND parent_folder_id = #{parentId}
+    </select>
 
     <select id="selectFileByUser" resultType="com.hezae.skylineservice.model.File">
         SELECT * FROM files
@@ -39,10 +41,17 @@
           AND file_path=  CONCAT(#{filePath}, '%');
     </select>
 
+    <select id="selectFileByUserAndFileNameAndFileTypeAndParentFolderId" resultType="com.hezae.skylineservice.model.File">
+        SELECT * FROM files
+        WHERE owner_id = #{userId}
+          AND file_name = concat(#{fileName})
+          AND file_type = concat(#{fileType})
+          AND parent_folder_id = #{parentFolderId}
+    </select>
+
     <!-- 插入文件记录 -->
     <insert id="addFile" parameterType="com.hezae.skylineservice.model.File">
     INSERT INTO files(
-                file_uuid,
                 file_path,
                 file_name,
                 file_type,
@@ -56,7 +65,6 @@
                 description,
                 owner_id
             ) VALUES (
-                         #{UUid},
                          #{filePath},
                          #{fileName},
                          #{fileType},
@@ -71,8 +79,24 @@
                          #{ownerId}
                      )
 </insert>
+    <!-- 删除文件记录 -->
+<delete id="deleteFileByFileId" parameterType="int">
+    DELETE  FROM files
+    WHERE file_id = #{fileId}
+</delete>
 
-
+   <!--更新文件名-->
+    <update id="updateFileNameById" parameterType="com.hezae.skylineservice.model.File">
+    UPDATE files
+    SET file_name = #{fileName}
+    WHERE file_id = #{fileId}
+    </update>
+    <!--更新文件路径-->
+    <update id="updateFilePathById" parameterType="com.hezae.skylineservice.model.File">
+        UPDATE files
+        SET file_path = #{filePath}
+        WHERE file_id = #{fileId}
+        </update>
     <!-- 其他SQL语句... -->
 
     <!-- 关联映射示例（假设UserMapper有一个根据ID查询User的方法） -->

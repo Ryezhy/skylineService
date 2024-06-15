@@ -1,11 +1,16 @@
 package com.hezae.skylineservice.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.hezae.skylineservice.databind.FileSerializer;
+import com.hezae.skylineservice.databind.UserSerializer;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+
+@JsonSerialize(using = UserSerializer.class)
 @Entity
 @Data
 @Table(name = "users")

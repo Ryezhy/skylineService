@@ -1,22 +1,18 @@
 package com.hezae.skylineservice.service;
 
 import com.google.common.util.concurrent.RateLimiter;
-import com.hezae.skylineservice.model.UploadFile;
+import com.hezae.skylineservice.tools.HdfsUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.*;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.Objects;
 
 @Service
 @Slf4j
@@ -24,28 +20,67 @@ public class HadoopServiceTools {
 
     @Value("${hdfs.Path}")
     private String hdfsUri;
+    @Autowired
+    private HdfsUtil hdfsService;
 
-    public void uploadFileInChunks(MultipartFile file, String userId, String fileName) throws IOException {
+    //创建文件夹
+    public boolean createFolder(String path, String folderName) {
+        return hdfsService.mkdir(path + '/' + folderName);
+    }
+    //注意这个文件名是文件名+'.'+文件类型
+    public void deleteFile(String path, String fileName) {
+        hdfsService.delete(path + '/' + fileName);
+    }
+    //重命名，这个路径是全路径
+    public boolean rename(String oldPath, String newPath){
+       return hdfsService.rename(oldPath,newPath);
+    }
+    //上传文件
+    public boolean uploadFile(String path,String fileName,String fileType) throws RuntimeException {
+        System.out.println(path);
+        try {
+            hdfsService.uploadFileToHdfs("D:/下载/testDir/"+path+'/'+fileName+'.'+fileType, path+'/'+fileName+'.'+fileType);
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void downloadFile(String path, OutputStream outputStream) {
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", hdfsUri);
-
-        try (FileSystem fs = FileSystem.get(conf);
-             FSDataOutputStream outputStream = fs.append(new Path("/user/" + userId + "/" + fileName));
-             InputStream inputStream = file.getInputStream()) {
-
-            // 因为使用了append模式，所以无需显式seek，上次的写入点即为本次的起始位置
+        FileSystem fs;
+        FSDataInputStream inputStream;
+        Path filePath = new Path(path);
+        try {
+            fs = FileSystem.get(conf);
+            if (!fs.exists(filePath )) {
+                throw new FileNotFoundException("文件未找到: "+ filePath );
+            }
+            FileStatus fileStatus = fs.getFileStatus(filePath);
+            long fileSize = fileStatus.getLen();
+            inputStream = fs.open(filePath);
             byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
+            // 初始化 RateLimiter 为每秒最多允许10MB的流量
+            RateLimiter limiter = RateLimiter.create(2 * 1024 * 1024); // 注意转换为字节每秒
+            while (true) {
+                int bytesRead = inputStream.read(buffer);
+                if (bytesRead == -1) {
+                    break;
+                }
+                limiter.acquire(bytesRead);
                 outputStream.write(buffer, 0, bytesRead);
             }
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
     /**
      * 分块下载HDFS上的文件。
      *
-     * @param username     用户名，用于构建HDFS文件路径。
      * @param fileName     文件名，不含扩展名。
      * @param fileType     文件类型（扩展名）。
      * @param outputStream 输出流，用于写入下载的文件内容。
@@ -53,12 +88,12 @@ public class HadoopServiceTools {
      * @param length       需要下载的字节数，如果为-1，则下载从startByte到文件结尾的所有内容。
      * @throws IOException 在读取文件或写入输出流时可能发生的I/O异常。
      **/
-    public void downloadFileInChunks(String username, String fileName, String fileType, OutputStream outputStream, Long startByte, long length) throws IOException {
+    public void downloadFileInChunks(String path,String fileName, String fileType, OutputStream outputStream, Long startByte, long length) throws IOException {
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", hdfsUri);
 
         long totalBytesRead = 0; // 用于追踪总读取字节数
-        Path filePath = new Path("/" + username + "/" + fileName + "." + fileType);
+        Path filePath = new Path(path +'/' +fileName + "." + fileType);
 
         FileSystem fs;
         FSDataInputStream inputStream;
@@ -70,7 +105,7 @@ public class HadoopServiceTools {
                 log.info("fs is null");
             }
             if (!fs.exists(filePath)) {
-                throw new FileNotFoundException("文件未找到: " + fileName + "." + fileType);
+                throw new FileNotFoundException("文件未找到: "+ filePath);
             }
 
             FileStatus fileStatus = fs.getFileStatus(filePath);
@@ -133,71 +168,6 @@ public class HadoopServiceTools {
                 }
             }
         }*/
-    }
-
-
-    private final String tempDir = System.getProperty("java.io.tmpdir");
-    public void uploadChunk(MultipartFile file, UploadFile uploadFile) throws IOException {
-        String tempDir = this.tempDir + File.separator + uploadFile.getFile_path();
-        File tempFile = new File(tempDir, uploadFile.getFile_UUid() + ".part" + uploadFile.getFile_start());
-        Files.copy(file.getInputStream(), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        boolean allUploaded = true;
-        //当上传完所有分块，检查是否存在所有块在临时文件里面
-        if(Objects.equals(uploadFile.getFile_start(), uploadFile.getFile_length())){
-            for (int i = 0; i < uploadFile.getFile_length(); i++) {
-                File partFile = new File(tempDir, uploadFile.getFile_name() + ".part" + i);
-                if (!partFile.exists()) {
-                    allUploaded = false;
-                    break;
-                }
-            }
-        }
-        if (allUploaded) {
-            mergeChunksAndUploadToHdfs(uploadFile.getFile_name()+'.'+uploadFile.getFile_type(), uploadFile,uploadFile.getFile_length(), tempDir);
-        }
-    }
-
-    private void mergeChunksAndUploadToHdfs(String fileName, UploadFile uploadFile,Long totalChunks, String tempDir) throws IOException {
-        File completeFile = new File(tempDir, fileName);
-
-        try (BufferedOutputStream mergedStream = new BufferedOutputStream(new FileOutputStream(completeFile))) {
-            for (int i = 0; i < totalChunks; i++) {
-                File partFile = new File(tempDir, uploadFile.getFile_UUid() + ".part"+ i);
-                Files.copy(partFile.toPath(), mergedStream);//合并
-                partFile.delete();//删除临时文件块
-            }
-        } catch (IOException e) {
-            // 处理文件操作异常
-            e.printStackTrace();
-            throw new IOException("Failed to merge chunks and upload to HDFS: " + e.getMessage());
-        }
-
-        // Upload the complete file to HDFS
-        Configuration conf = new Configuration();
-        conf.set("fs.defaultFS", hdfsUri);
-        FileSystem fs = FileSystem.get(conf);
-
-        try (InputStream inputStream = new FileInputStream(completeFile)) {
-            Path hdfsPath = new Path(hdfsUri+'/'+uploadFile.getFile_path()+'/'+uploadFile.getFile_name()+'.'+uploadFile.getFile_type());
-            if (fs.exists(hdfsPath)) {
-                throw new IOException("File already exists in HDFS: " + fileName);
-            }
-            try (OutputStream outputStream = fs.create(hdfsPath)) {
-                byte[] buffer = new byte[4096];
-                int bytesRead;
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
-            }
-        } catch (IOException e) {
-            // 处理 HDFS 操作异常
-            e.printStackTrace();
-            throw new IOException("Failed to upload file to HDFS: " + e.getMessage());
-        } finally {
-            fs.close();
-        }
-
-        completeFile.delete();
     }
 
 }

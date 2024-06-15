@@ -19,8 +19,8 @@ public class File {
 
     // uuid
     @Id
-    @Column(name = "file_UUid", nullable = false, unique = true)
-    private String file_UUid;
+    @Column(name = "file_id", nullable = false, unique = true)
+    private int file_id;
     // 文件名
     @Column(name = "file_name", nullable = false)
     private String file_name;
@@ -31,10 +31,10 @@ public class File {
     @Column(name = "file_path", nullable = false)
     private String file_path;
     // 文件上传时间
-    @Column(name = "upload_time", nullable = true)
+    @Column(name = "upload_time")
     private String upload_time;
     // 修改时间
-    @Column(name = "modification_time", nullable = true)
+    @Column(name = "modification_time")
     private String modification_time;
     // 文件类型
     @Column(name = "file_type", nullable = false)
@@ -56,10 +56,10 @@ public class File {
     private int owner_id;
     // 文件状态
     @Column(name = "file_status", nullable = false)
-    private String file_status;
+    private int file_status;
     // 父文件夹ID
-    @Column(name = "parent_folder_id", nullable = false)
-    private String parent_folderId; // 父文件夹ID是外键
+    @Column(name = "parent_folder_Id", nullable = false)
+    private int parent_folder_id; // 父文件夹ID是外键
 
 
     public File(String fileName,Long fileSize,String fileType,String filePath,int owner,String description){
@@ -69,13 +69,30 @@ public class File {
         this.file_path = filePath;
         this.upload_time = String.valueOf(LocalDateTime.now());
         this.modification_time = String.valueOf(LocalDateTime.now());
-        this.file_status = "normal";
-        this.file_UUid = String.valueOf(UUID.randomUUID());
+        this.file_status = 0;
         this.access_permissions = "public";
         this.download_count = 0;
         this.file_hash = "";
         this.owner_id = owner;
         this.description = description;
+    }
+    public File(int id,String fileName,Long fileSize,String fileType,String filePath,int owner,String access_permissions,
+                int file_status,Integer download_count,String upload_time,String modification_time,String file_hash,
+                        String description,int parent_folder_id){
+        this.file_id = id;
+        this.file_name = fileName;
+        this.file_size = fileSize;
+        this.file_type = fileType;
+        this.file_path = filePath;
+        this.upload_time =  upload_time;
+        this.modification_time = modification_time;
+        this.file_status = file_status;
+        this.access_permissions = access_permissions;
+        this.download_count =  download_count;
+        this.file_hash = file_hash;
+        this.owner_id = owner;
+        this.description = description;
+        this.parent_folder_id = parent_folder_id;
     }
 
     public File() {

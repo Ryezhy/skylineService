@@ -50,7 +50,7 @@ public class TestHdfs {
         //测试上传三个文件"        C:/Users/26506/Downloads/test.zip
 
         //C:/Users/26506/IdeaProjects/skylineService/src/main/resources/test/text2.txt
-        hdfsService.uploadFileToHdfs("C:/Users/26506/IdeaProjects/skylineService/src/main/resources/test/text2.txt","/admin");
+        hdfsService.uploadFileToHdfs("D:/下载/testDir/admin/veer-104885726.jpg","/admin");
     }
 
     /**
@@ -117,7 +117,9 @@ public class TestHdfs {
      */
     @Test
     public void testDelete(){
-        hdfsService.delete("/testDir/text2.txt");
+        hdfsService.delete("/admin/媒体文件");
+
+
         //再次遍历
         testListFiles();
     }

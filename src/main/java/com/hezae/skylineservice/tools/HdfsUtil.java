@@ -80,7 +80,7 @@ public class HdfsUtil {
                 //创建目录
                 return fileSystem.mkdirs(new Path(hdfsPath));
             } catch (IOException e) {
-                logger.error(MessageFormat.format("创建HDFS目录失败，path:{0}", path), e);
+                logger.error("创建目录：{} 失败, 错误：{}", path, e.getMessage());
                 return false;
             } finally {
                 close(fileSystem);
@@ -97,8 +97,13 @@ public class HdfsUtil {
      * @author adminstrator
      * @since 1.0.0
      */
-    public void uploadFileToHdfs(String srcFile, String dstPath) {
-        this.uploadFileToHdfs(false, true, srcFile, dstPath);
+    public boolean uploadFileToHdfs(String srcFile, String dstPath) {
+        try {
+            this.uploadFileToHdfs(false, true, srcFile, dstPath);
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -125,7 +130,7 @@ public class HdfsUtil {
         } catch (IOException e) {
             logger.error(MessageFormat.format("上传文件至HDFS失败，srcFile:{0},dstPath:{1}", srcFile, dstPath), e);
         } finally {
-            close(fileSystem);
+           // close(fileSystem);
         }
     }
 
@@ -151,19 +156,21 @@ public class HdfsUtil {
             logger.error(MessageFormat.format("'判断文件或者目录是否在HDFS上面存在'失败，path:{0}", path), e);
             return false;
         } finally {
-            close(fileSystem);
+            //close(fileSystem);
         }
     }
 
     /**
      * HDFS创建文件
+     *
      * @param path
      * @param file
+     * @return
      * @throws Exception
      */
-    public  void createFile(String path, MultipartFile file) throws Exception {
+    public boolean createFile(String path, MultipartFile file) throws Exception {
         if (StringUtils.isEmpty(path) || null == file.getBytes()) {
-            return;
+            return false;
         }
         String fileName = file.getOriginalFilename();
         FileSystem fs = getFileSystem();
@@ -174,6 +181,7 @@ public class HdfsUtil {
         outputStream.write(file.getBytes());
         outputStream.close();
         fs.close();
+        return false;
     }
 
 
@@ -221,7 +229,7 @@ public class HdfsUtil {
             } catch (IOException e) {
                 logger.error(MessageFormat.format("获取HDFS上面的某个路径下面的所有文件失败，path:{0}", path), e);
             } finally {
-                close(fileSystem);
+               // close(fileSystem);
             }
         }
 
@@ -284,7 +292,7 @@ public class HdfsUtil {
         } catch (IOException e) {
             logger.error(MessageFormat.format("从HDFS下载文件至本地失败，srcFile:{0},dstFile:{1}", srcFile, dstFile), e);
         } finally {
-            close(fileSystem);
+           // close(fileSystem);
         }
     }
 
@@ -420,7 +428,7 @@ public class HdfsUtil {
         } catch (IOException e) {
             logger.error(MessageFormat.format("重命名失败，srcFile:{0},dstFile:{1}", srcFile, dstFile), e);
         } finally {
-            close(fileSystem);
+           // close(fileSystem);
         }
 
         return false;
@@ -441,12 +449,12 @@ public class HdfsUtil {
         FileSystem fileSystem = null;
         try {
             fileSystem = getFileSystem();
-
+            logger.info("要删除的文件是"+hdfsPath);
             return fileSystem.delete(hdfsPath, true);
         } catch (IOException e) {
             logger.error(MessageFormat.format("删除HDFS文件或目录失败，path:{0}", path), e);
         } finally {
-            close(fileSystem);
+            //close(fileSystem);
         }
 
         return false;
@@ -473,7 +481,7 @@ public class HdfsUtil {
         } catch (IOException e) {
             logger.error(MessageFormat.format("获取某个文件在HDFS集群的位置失败，path:{0}", path), e);
         } finally {
-            close(fileSystem);
+           // close(fileSystem);
         }
 
         return null;
@@ -539,7 +547,7 @@ public class HdfsUtil {
         } finally {
             inputStream.close();
             outputStream.close();
-            fs.close();
+           // fs.close();
         }
     }
 

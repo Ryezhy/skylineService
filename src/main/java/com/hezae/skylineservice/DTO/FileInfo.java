@@ -5,12 +5,12 @@ import lombok.Data;
 
 @Data
 public class FileInfo {
-    String file_UUid;
+    int file_id;
     Long start;
     Long length;
     int state;
-    public FileInfo(String file_UUid, int start, int length, int state) {
-        this.file_UUid = file_UUid;
+    public FileInfo(int file_id, int start, int length, int state) {
+        this.file_id = file_id;
         this.start = (long) start;
         this.length = (long) length;
         this.state = state;

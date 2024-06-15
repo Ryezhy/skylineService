@@ -20,4 +20,9 @@ public class LoginServiceImpl implements LoginService {
     public User getUserInfo(String username, String password) {
         return userMapper.selectUserByUsernameAndPassword(username, password);
     }
+    @Override
+    public User getUserInfo(int userId){
+        return userMapper.selectUserById(userId);
+    }
+
 }
